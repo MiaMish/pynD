@@ -1,6 +1,6 @@
 import consolemd
 from termcolor import colored
-from src.stats_tracker import Tracker, CharacterStats, Monsters
+from src.stats_tracker import Tracker, CharacterStats, Monsters, CharacterTypes
 
 tracker = Tracker()
 monsters = Monsters()
@@ -44,7 +44,7 @@ def command_quit(*args):
 
 def command_print(*args):
 	global tracker
-	print(colored(tracker.table, "green"))
+	print(tracker.table)
 
 
 def command_add_user(*args):
@@ -52,7 +52,7 @@ def command_add_user(*args):
 		print(colored("Invalid input, aborting command", "red"))
 		return
 	char = CharacterStats()
-	char.type = "player"
+	char.type = CharacterTypes.Player
 	char.name = args[1]
 	char.armor_class = int(args[2])
 	char.hp_full = int(args[3])
@@ -66,7 +66,7 @@ def command_add_npc(*args):
 		print(colored("Invalid input, aborting command", "red"))
 		return
 	char = CharacterStats()
-	char.type = "npc"
+	char.type = CharacterTypes.NPC
 	char.name = args[1]
 	char.armor_class = int(args[2])
 	char.hp_full = int(args[3])
@@ -105,6 +105,7 @@ def command_damage(*args):
 	if not char:
 		return
 	char.hp_curr -= val
+	char.hp_curr = max(0, char.hp_curr)
 	command_print()
 
 
@@ -116,6 +117,7 @@ def command_heal(*args):
 	if not char:
 		return
 	char.hp_curr += val
+	char.hp_curr = max(0, char.hp_curr)
 	command_print()
 
 

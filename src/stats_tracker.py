@@ -1,9 +1,10 @@
 import json
 import os.path
-from texttable import Texttable
-from termcolor import colored, COLORS, RESET
+from texttable import Texttable, get_color_string, bcolors
+from termcolor import colored
 from random import randint
 from math import floor
+from src.colors import colored_table_entry, colored_row
 
 
 def eval_roll(roll_str):
@@ -174,9 +175,9 @@ class Tracker:
 
 		table = Texttable(max_width=250)
 		table.set_cols_align(extend_aux(["l"], CharacterStats.columns_align()))
-		rows = [extend_aux(["index"], CharacterStats.columns)]
-		for idx, char in enumerate(self.current_sort):
-			row = extend_aux([idx], char.data_row)
+		rows = [colored_row(extend_aux(["index"], CharacterStats.columns), bcolors.PURPLE)]
+		for idx, character in enumerate(self.current_sort):
+			row = extend_aux([colored_table_entry(idx, bcolors.BLUE)], character.data_row_colored)
 			rows.append(row)
 		table.add_rows(rows)
 		return table.draw()
@@ -213,9 +214,27 @@ class Tracker:
 		return None
 
 
+class CharacterTypes:
+	Player = "player"
+	NPC = "npc"
+	Monster = "monster"
+
+	@staticmethod
+	def sort_factor(type):
+		return {
+			CharacterTypes.Player: 0,
+			CharacterTypes.NPC: 1,
+			CharacterTypes.Monster: 2
+		}[type]
+
+
 class CharacterStats:
 
 	columns = ["type", "name", "armor_class", "hp_full", "hp_curr", "initiative"]
+	columns_bcolors = {
+		'type': bcolors.BOLD,
+		'name': bcolors.YELLOW
+	}
 
 	def __init__(self):
 		self.type = None
@@ -225,7 +244,7 @@ class CharacterStats:
 	@classmethod
 	def load_monster(cls, monster_json):
 		char = CharacterStats()
-		char.type = "monster"
+		char.type = CharacterTypes.Monster
 		char.name = monster_json["name"]
 		char.armor_class = monster_json["armor_class"]
 		char.hp_full = eval_roll(monster_json["hit_dice"])
@@ -248,10 +267,30 @@ class CharacterStats:
 		assert len(align) == len(cls.columns)
 		return align
 
+	def attr_value_with_color(self, attr):
+		value = getattr(self, attr)
+		if not value:
+			return ""
+		if attr in self.columns_bcolors:
+			return colored_table_entry(value, self.columns_bcolors[attr])
+		if attr == "hp_curr":
+			value = int(value)
+			if value <= 0:
+				return colored_table_entry(value, bcolors.RED)
+			if value == getattr(self, 'hp_full'):
+				return colored_table_entry(value, bcolors.GREEN)
+			else:
+				return colored_table_entry(value, bcolors.YELLOW)
+		return value
+
+	@property
+	def data_row_colored(self):
+		return[self.attr_value_with_color(column) for column in self.columns]
+
 	@property
 	def data_row(self):
 		return[attr if attr else "" for attr in (getattr(self, col) for col in self.columns)]
 
 	@property
 	def sorting_factor(self):
-		return -1*self.initiative if self.initiative else 0, self.type, self.name
+		return -1*self.initiative if self.initiative else 0, CharacterTypes.sort_factor(self.type), self.name

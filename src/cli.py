@@ -1,6 +1,7 @@
 import consolemd
 from termcolor import colored
-from src.stats_tracker import Tracker, CharacterStats, Monsters, CharacterTypes
+from src.stats_tracker import Tracker, CharacterStats, CharacterTypes
+from src.monsters import Monsters
 from src.encounters import encounters, Encounter
 
 tracker = Tracker()

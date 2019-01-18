@@ -1,6 +1,7 @@
 import consolemd
 from termcolor import colored
 from src.stats_tracker import Tracker, CharacterStats, Monsters, CharacterTypes
+from src.encounters import encounters, Encounter
 
 tracker = Tracker()
 monsters = Monsters()
@@ -183,11 +184,82 @@ def command_monster_details(*args):
 	print(details)
 
 
+def command_edit_encounter(*args):
+	global tracker
+	if len(args) < 2:
+		print(colored("Invalid input - please supply encounter name, aborting command", "red"))
+		return
+	name = args[1]
+	if name not in encounters:
+		encounters[name] = Encounter(name)
+	tracker = encounters[name]
+	command_print()
+
+
+def command_stop_edit_encounter(*args):
+	global tracker
+	if not isinstance(tracker, Encounter):
+		print("No encounter is currently edited")
+		return
+	print(colored("Stopping to edit encounter {}".format(tracker.name)))
+	command_save()
+	tracker = Tracker()
+	command_print()
+
+
+def command_load_encounter(*args):
+	global tracker
+	if isinstance(tracker, Encounter):
+		print(colored("You are in the context of an encounter edit, cannot load", "red"))
+		return
+	if len(args) < 2:
+		print(colored("Invalid input - please supply encounter name, aborting command", "red"))
+		return
+	name = args[1]
+	if name not in encounters:
+		print(colored("Encounter '{}' does not exist, aborting command".format(name), "red"))
+		return
+	encounter = encounters[name]
+	for character in encounter.characters.values():
+		tracker.add_character(character)
+	command_print()
+
+
+def command_get_encounters(*args):
+	if not encounters:
+		print(colored("No encounters found", "red"))
+		return
+	for name in encounters.keys():
+		print(colored(name, "yellow"))
+
+
+def command_print_encounters(*args):
+	if not encounters:
+		print(colored("No encounters found", "red"))
+		return
+	for name, encounter in encounters.items():
+		print("-- Encounter {} --".format(colored(name, "yellow")))
+		print(encounter.table)
+		print()
+
+
+def command_delete_encounter(*args):
+	if len(args) < 2:
+		print(colored("Invalid input - please supply encounter name, aborting command", "red"))
+		return
+	name = args[1]
+	if name not in encounters:
+		print(colored("Encounter '{}' does not exist, aborting command".format(name), "red"))
+		return
+	encounters[name].delete()
+
+
 commands = {
 	'h': command_help,
 	'help': command_help,
 	'q': command_quit,
 	'quit': command_quit,
+	'exit': command_quit,
 	's': command_save,
 	'save': command_save,
 	'p': command_print,
@@ -209,5 +281,17 @@ commands = {
 	'rs': command_reset,
 	'reset': command_reset,
 	'm': command_monster_details,
-	'monster': command_monster_details
+	'monster': command_monster_details,
+	'edit-encounter': command_edit_encounter,
+	'ee': command_edit_encounter,
+	'stop-edit-encounter': command_stop_edit_encounter,
+	'ees': command_stop_edit_encounter,
+	'load-encounter': command_load_encounter,
+	'le': command_load_encounter,
+	'get-encounters': command_get_encounters,
+	'ge': command_get_encounters,
+	'print-encounters': command_print_encounters,
+	'pe': command_print_encounters,
+	'delete-encounter': command_delete_encounter,
+	'de': command_delete_encounter
 }

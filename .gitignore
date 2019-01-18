@@ -1,4 +1,4 @@
 **/__pycache__
 venv
-persistency/*.json
+persistency/**/*.json
 .idea

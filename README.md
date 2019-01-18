@@ -2,7 +2,7 @@
 
 ### General
 - **h/help**: help text
-- **q/quit**: exit
+- **q/quit/exit**: exit
 - **s/save**: saves all stats
 - **p/print**: print current stats
 
@@ -20,3 +20,11 @@
 
 ### Monsters
 - **m/monster** "\<official name>": prints monster details
+
+### Encounters
+- **ee/edit-encounter** \<name>: enter encounter edit mode for this new or existing encounter by name
+- **ees/stop-edit-encounter** \<name>: exit encounter edit mode
+- **le/load-encounter**: load a pre-existing encounter to current stats
+- **ge/get-encounters**: list all encounters
+- **pe/print-encounters**: print all encounters
+- **de/delete-encounter**: \<name>: delete an encounter by name

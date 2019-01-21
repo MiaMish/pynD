@@ -1,4 +1,5 @@
 import consolemd
+from functools import wraps
 from termcolor import colored
 from src.stats_tracker import Tracker, CharacterStats, CharacterTypes
 from src.monsters import Monsters
@@ -11,30 +12,46 @@ with open('README.md', 'r') as readme:
 	readme_content = readme.read()
 
 
+def post_save(func):
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		global tracker
+		resp = func(self, *args, **kwargs)
+		tracker.flush()
+		return resp
+	return wrapper
+
+
+def post_print(func):
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		resp = func(self, *args, **kwargs)
+		command_print()
+		return resp
+	return wrapper
+
+
 def start():
 
 	command_print()
 	print("Event loop started!")
 
 	while True:
-		command = input("> ")
-		command_split = command.split(' ')
-		if command_split[0] not in commands:
-			print(colored("Invalid command. Usage:", "red"))
-			command_help()
-		else:
-			commands[command_split[0]](*command_split)
-		print("")
+		try:
+			command = input("> ")
+			command_split = command.split(' ')
+			if command_split[0] not in commands:
+				print(colored("Invalid command. Usage:", "red"))
+				command_help()
+			else:
+				commands[command_split[0]](*command_split)
+			print("")
+		except Exception as ex:
+			print(colored(ex, "red"))
 
 
 def command_help(*args):
 	consolemd.Renderer().render(readme_content)
-
-
-def command_save(*args):
-	global tracker
-	tracker.flush()
-	print(colored("saved!", "blue"))
 
 
 def command_quit(*args):
@@ -49,6 +66,8 @@ def command_print(*args):
 	print(tracker.table)
 
 
+@post_save
+@post_print
 def command_add_user(*args):
 	if not len(args) == 4:
 		print(colored("Invalid input, aborting command", "red"))
@@ -60,9 +79,10 @@ def command_add_user(*args):
 	char.hp_full = int(args[3])
 	char.hp_curr = char.hp_full
 	tracker.add_character(char)
-	command_print()
 
 
+@post_save
+@post_print
 def command_add_npc(*args):
 	if not len(args) == 4:
 		print(colored("Invalid input, aborting command", "red"))
@@ -74,9 +94,10 @@ def command_add_npc(*args):
 	char.hp_full = int(args[3])
 	char.hp_curr = char.hp_full
 	tracker.add_character(char)
-	command_print()
 
 
+@post_save
+@post_print
 def command_update(*args):
 	assert len(args) == 4
 	name_or_index = args[1]
@@ -96,9 +117,10 @@ def command_update(*args):
 	else:
 		print(colored("Invalid attribute: '{}'".format(attr), "red"))
 		return
-	command_print()
 
 
+@post_save
+@post_print
 def command_damage(*args):
 	assert len(args) == 3
 	name_or_index = args[1]
@@ -108,9 +130,10 @@ def command_damage(*args):
 		return
 	char.hp_curr -= val
 	char.hp_curr = max(0, char.hp_curr)
-	command_print()
 
 
+@post_save
+@post_print
 def command_heal(*args):
 	assert len(args) == 3
 	name_or_index = args[1]
@@ -120,16 +143,18 @@ def command_heal(*args):
 		return
 	char.hp_curr += val
 	char.hp_curr = max(0, char.hp_curr)
-	command_print()
 
 
+@post_save
+@post_print
 def command_remove(*args):
 	assert len(args) == 2
 	name_or_index = args[1]
 	tracker.remove_character(name_or_index)
-	command_print()
 
 
+@post_save
+@post_print
 def command_add_monster(*args):
 	if len(args) < 3:
 		print(colored("Invalid input, aborting command", "red"))
@@ -149,9 +174,10 @@ def command_add_monster(*args):
 		print(colored("No monster with name '{}'".format(name), "red"))
 		return
 	tracker.add_character(monster)
-	command_print()
 
 
+@post_save
+@post_print
 def command_reset(*args):
 	assert len(args) == 2
 	attr = args[1]
@@ -163,7 +189,6 @@ def command_reset(*args):
 		else:
 			print(colored("Invalid attribute: '{}'".format(attr), "red"))
 			return
-	command_print()
 
 
 def command_monster_details(*args):
@@ -185,6 +210,7 @@ def command_monster_details(*args):
 	print(details)
 
 
+@post_print
 def command_edit_encounter(*args):
 	global tracker
 	if len(args) < 2:
@@ -194,20 +220,21 @@ def command_edit_encounter(*args):
 	if name not in encounters:
 		encounters[name] = Encounter(name)
 	tracker = encounters[name]
-	command_print()
 
 
+@post_print
 def command_stop_edit_encounter(*args):
 	global tracker
 	if not isinstance(tracker, Encounter):
 		print("No encounter is currently edited")
 		return
 	print(colored("Stopping to edit encounter {}".format(tracker.name)))
-	command_save()
+	tracker.flush()
 	tracker = Tracker()
-	command_print()
 
 
+@post_save
+@post_print
 def command_load_encounter(*args):
 	global tracker
 	if isinstance(tracker, Encounter):
@@ -223,7 +250,6 @@ def command_load_encounter(*args):
 	encounter = encounters[name]
 	for character in encounter.characters.values():
 		tracker.add_character(character)
-	command_print()
 
 
 def command_get_encounters(*args):
@@ -261,8 +287,6 @@ commands = {
 	'q': command_quit,
 	'quit': command_quit,
 	'exit': command_quit,
-	's': command_save,
-	'save': command_save,
 	'p': command_print,
 	'print': command_print,
 	'au': command_add_user,

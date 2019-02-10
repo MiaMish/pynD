@@ -3,10 +3,13 @@ from functools import wraps
 from termcolor import colored
 from src.stats_tracker import Tracker, CharacterStats, CharacterTypes
 from src.monsters import Monsters
+from src.spells import Spells
 from src.encounters import encounters, Encounter
 
 tracker = Tracker()
 monsters = Monsters()
+spells = Spells()
+
 
 with open('README.md', 'r') as readme:
 	readme_content = readme.read()
@@ -64,6 +67,12 @@ def command_quit(*args):
 def command_print(*args):
 	global tracker
 	print(tracker.table)
+
+
+@post_print
+def command_undo(*args):
+	global tracker
+	tracker.undo()
 
 
 @post_save
@@ -165,7 +174,7 @@ def command_add_monster(*args):
 			idx += 1
 		name = " ".join(args[1:idx+1])
 		name = name[1:-1]
-		nick = args[idx+2]
+		nick = args[idx+1]
 	else:
 		name = args[1]
 		nick = args[2]
@@ -206,6 +215,25 @@ def command_monster_details(*args):
 	details = monsters.get_details(name)
 	if not details:
 		print(colored("No monster with name '{}'".format(name), "red"))
+		return
+	print(details)
+
+
+def command_spell_details(*args):
+	if len(args) < 2:
+		print(colored("Invalid input, aborting command", "red"))
+		return
+	if args[1].startswith('"'):
+		idx = 1
+		while not args[idx].endswith('"'):
+			idx += 1
+		name = " ".join(args[1:idx+1])
+		name = name[1:-1]
+	else:
+		name = args[1]
+	details = spells.get_details(name)
+	if not details:
+		print(colored("No spell with name '{}'".format(name), "red"))
 		return
 	print(details)
 
@@ -289,6 +317,8 @@ commands = {
 	'exit': command_quit,
 	'p': command_print,
 	'print': command_print,
+	'un': command_undo,
+	'undo': command_undo,
 	'au': command_add_user,
 	'add-user': command_add_user,
 	'an': command_add_npc,
@@ -307,6 +337,8 @@ commands = {
 	'reset': command_reset,
 	'm': command_monster_details,
 	'monster': command_monster_details,
+	's': command_spell_details,
+	'spell': command_spell_details,
 	'edit-encounter': command_edit_encounter,
 	'ee': command_edit_encounter,
 	'stop-edit-encounter': command_stop_edit_encounter,

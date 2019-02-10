@@ -1,5 +1,6 @@
 import json
 import os.path
+from shutil import copyfile, move
 from texttable import Texttable, bcolors
 from termcolor import colored
 from random import randint
@@ -25,6 +26,7 @@ def extend_aux(list1, list2):
 
 class Tracker:
 	filename = 'persistency/track.json'
+	filename_for_undo = 'persistency/track_bk.json'
 
 	def __init__(self):
 		self.characters = {}
@@ -60,6 +62,7 @@ class Tracker:
 		return table.draw()
 
 	def flush(self):
+		copyfile(self.filename, self.filename_for_undo)
 		self.export_to_file(self.filename)
 
 	def add_character(self, char):
@@ -89,6 +92,13 @@ class Tracker:
 			pass
 		print(colored("Character with name '{} does not exist".format(name_or_index), "red"))
 		return None
+
+	def undo(self):
+		if not os.path.exists(self.filename_for_undo):
+			print(colored("Cannot undo any further", "red"))
+			return
+		move(self.filename_for_undo, self.filename)
+		self.load_from_file(self.filename)
 
 
 class CharacterTypes:
@@ -124,7 +134,7 @@ class CharacterStats:
 		char.type = CharacterTypes.Monster
 		char.name = monster_json["name"]
 		char.armor_class = monster_json["armor_class"]
-		char.hp_full = eval_roll(monster_json["hit_dice"])
+		char.hp_full = max(eval_roll(monster_json["hit_dice"]), eval_roll(monster_json["hit_dice"]), eval_roll(monster_json["hit_dice"]))
 		char.hp_curr = char.hp_full
 		return char
 

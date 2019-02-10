@@ -5,6 +5,7 @@
 - **q/quit/exit**: exit
 - **s/save**: saves all stats
 - **p/print**: print current stats
+- **un/undo**: undo last change to tracker
 
 ### Players
 - **au/add-user** \<name> \<ac> \<hp>
@@ -20,6 +21,9 @@
 
 ### Monsters
 - **m/monster** "\<official name>": prints monster details
+
+### Spells
+- **s/spell** "\<official name>": prints spell details
 
 ### Encounters
 - **ee/edit-encounter** \<name>: enter encounter edit mode for this new or existing encounter by name
